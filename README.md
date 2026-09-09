@@ -36,17 +36,3 @@ A sleek React Native mobile application designed for restaurant chefs to manage,
 
 ---
 
-## 🚀 How to Run the Project
-
-1. **Via Expo Snack:**
-   * Import the project files into [snack.expo.dev](https://snack.expo.dev).
-   * Ensure `chef-logo.png` is placed inside the `assets/` directory.
-   * Run the app using the Web preview or scan the QR code with the **Expo Go** app on iOS or Android.
-
-2. **Via Local Setup:**
-   ```bash
-   # Install dependencies
-   npm install
-
-   # Start the Expo development server
-   npx expo start
