@@ -29,9 +29,8 @@ A sleek React Native mobile application designed for restaurant chefs to manage,
 
 ## 🛠️ Tech Stack & Dependencies
 
-* **Framework:** React Native (Expo Workflow)
-* **Language:** JavaScript (ES6 / JSX)
-* **Core Components:** `SafeAreaView`, `FlatList`, `ScrollView`, `TextInput`, `TouchableOpacity`, `Picker`
+* **Framework:** React Native
+* **Language:** JavaScript
 * **Development Environment:** Expo Snack / Visual Studio Code
 
 ---
