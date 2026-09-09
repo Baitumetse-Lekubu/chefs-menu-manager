@@ -1,11 +1,52 @@
-# Sample Snack app
+# Chef's Menu Manager 🍽️
 
-Open the `App.js` file to start writing some code. You can preview the changes directly on your phone or tablet by scanning the **QR code** or use the iOS or Android emulators. When you're done, click **Save** and share the link!
+A sleek React Native mobile application designed for restaurant chefs to manage, categorize, and calculate average prices for menu items dynamically. Developed as part of the Mobile Application Development module assignment.
 
-When you're ready to see everything that Expo provides (or if you want to use your own editor) you can **Download** your project and use it with [expo cli](https://docs.expo.dev/get-started/installation/#expo-cli)).
+---
 
-All projects created in Snack are publicly available, so you can easily share the link to this project via link, or embed it on a web page with the `<>` button.
+## 📱 Features & Assignment Coverage
 
-If you're having problems, you can tweet to us [@expo](https://twitter.com/expo) or ask in our [forums](https://forums.expo.dev/c/expo-dev-tools/61) or [Discord](https://chat.expo.dev/).
+### 1. User Interface & Branding
+* **App Branding:** Displays the official **Chef's Menu Manager** title and logo assets prominently.
+* **Consistent Design:** Built using a dark-mode theme (`#121212`) with consistent padding, clear typography, and color-coded tags for dish courses.
+* **Intuitive Navigation:** Multi-screen layout with an interactive top navigation bar including clear **Back** navigation.
 
-Snack is Open Source. You can find the code on the [GitHub repo](https://github.com/expo/snack).
+### 2. Capture Menu Information
+* **Input Validation:** Interactive form capturing Dish Name, Description, Course, and Price.
+* **Dropdown Selection:** Course categorisation (*Starter*, *Main Course*, *Dessert*) powered by `@react-native-picker/picker`.
+* **Price Handling:** Enforces numeric input validation for pricing.
+
+### 3. Display & State Management
+* **Dynamic Menu List:** Real-time updates to the dish listing using React `useState` hooks.
+* **Optimized Rendering:** Displays all dishes inside a high-performance `FlatList`.
+* **Empty State Handling:** Friendly feedback messages when no dishes are present in the list.
+
+### 4. User Experience (UX) Enhancements
+* **Inline Feedback System:** Visual banner alerts confirming successful dish additions or flagging validation errors.
+* **Quick Stats & Dashboard:** A home landing view giving the chef a high-level overview of active dishes and quick navigation actions.
+
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+* **Framework:** React Native (Expo Workflow)
+* **Language:** JavaScript (ES6 / JSX)
+* **Core Components:** `SafeAreaView`, `FlatList`, `ScrollView`, `TextInput`, `TouchableOpacity`, `Picker`
+* **Development Environment:** Expo Snack / Visual Studio Code
+
+---
+
+## 🚀 How to Run the Project
+
+1. **Via Expo Snack:**
+   * Import the project files into [snack.expo.dev](https://snack.expo.dev).
+   * Ensure `chef-logo.png` is placed inside the `assets/` directory.
+   * Run the app using the Web preview or scan the QR code with the **Expo Go** app on iOS or Android.
+
+2. **Via Local Setup:**
+   ```bash
+   # Install dependencies
+   npm install
+
+   # Start the Expo development server
+   npx expo start
