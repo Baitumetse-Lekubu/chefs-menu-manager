@@ -342,7 +342,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
-    tintColor: COLORS.primaryText,
   },
   brandTitle: {
     fontSize: 16,
@@ -368,7 +367,6 @@ const styles = StyleSheet.create({
   heroLogo: {
     width: 80,
     height: 80,
-    tintColor: COLORS.primaryText,
     marginBottom: 10,
   },
   heroTitle: {
