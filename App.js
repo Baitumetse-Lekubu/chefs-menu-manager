@@ -10,19 +10,21 @@ import {
   FlatList,
   StatusBar,
   Image,
+  Modal,
+  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
-// Logo
+// Reference For Logo
 const LOGO_IMAGE = require('./assets/chef-logo.png');
 
-// App Theme
+// Dark Neutral Palette matching wireframes
 const COLORS = {
   background: '#121212',
   cardBackground: '#1E1E1E',
   secondarySurface: '#252525',
-  primaryAccent: '#4CAF50', 
-  secondaryAccent: '#FFC107',
+  primaryAccent: '#4CAF50', // Emerald Green
+  secondaryAccent: '#FFC107', // Amber Gold
   primaryText: '#FFFFFF',
   secondaryText: '#BDBDBD',
   errorColor: '#F44336',
@@ -31,84 +33,191 @@ const COLORS = {
   dessertColor: '#9C27B0',
 };
 
-// Test Menue Items
+// Initial Restaurant Menu Data
 const INITIAL_DISHES = [
   {
     id: '1',
     name: 'Pan-Seared Duck Breast',
-    description: 'Crispy skin duck breast with cherry reduction and parsnip puree.',
+    description:
+      'Crispy skin duck breast with cherry reduction and parsnip puree.',
     course: 'Starter',
     price: 145.0,
   },
   {
     id: '2',
+    name: 'Truffle Mushroom Risotto',
+    description:
+      'Arborio rice with wild forest mushrooms, truffle paste, and parmesan.',
+    course: 'Starter',
+    price: 120.0,
+  },
+  {
+    id: '3',
     name: 'Prime Ribeye Steak 300g',
-    description: 'Aged grass-fed beef with bone marrow butter and hand-cut chips.',
+    description:
+      'Aged grass-fed beef with bone marrow butter and hand-cut chips.',
     course: 'Main Course',
     price: 295.0,
   },
   {
-    id: '3',
+    id: '4',
+    name: 'Grilled Norwegian Salmon',
+    description:
+      'Pan-roasted salmon fillet with lemon-herb butter and asparagus.',
+    course: 'Main Course',
+    price: 260.0,
+  },
+  {
+    id: '5',
     name: 'Classic Crème Brûlée',
     description: 'Vanilla bean custard with a crisp caramelized sugar crust.',
     course: 'Dessert',
     price: 85.0,
   },
+  {
+    id: '6',
+    name: 'Dark Chocolate Fondant',
+    description: 'Warm molten chocolate cake served with pistachio gelato.',
+    course: 'Dessert',
+    price: 95.0,
+  },
 ];
 
 export default function App() {
-  
+  // Navigation State: 'home' | 'add' | 'view' | 'edit' | 'stats'
   const [currentScreen, setCurrentScreen] = useState('home');
 
-  // App Menu 
+  // Core State
   const [dishes, setDishes] = useState(INITIAL_DISHES);
 
-  // Form
+  // Form Field State (Add / Edit)
   const [dishName, setDishName] = useState('');
   const [description, setDescription] = useState('');
   const [course, setCourse] = useState('Starter');
   const [price, setPrice] = useState('');
   const [feedback, setFeedback] = useState({ text: '', isError: false });
 
-  const resetForm = () => {
+  // Edit Tracking State
+  const [editingId, setEditingId] = useState(null);
+
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('All');
+
+  // Delete Modal State
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [dishToDelete, setDishToDelete] = useState(null);
+
+  // --- REUSABLE HELPER FUNCTIONS ---
+  const resetFormFields = () => {
     setDishName('');
     setDescription('');
     setCourse('Starter');
     setPrice('');
     setFeedback({ text: '', isError: false });
+    setEditingId(null);
   };
 
-  const handleGoHome = () => {
-    resetForm();
+  const handleNavigateHome = () => {
+    resetFormFields();
     setCurrentScreen('home');
   };
 
-  const handleSaveNewItem = () => {
+  // ADD & EDIT / DELETE MANAGEMENT ---
+  const handleSaveItem = () => {
     if (!dishName.trim() || !description.trim() || !price.trim()) {
-      setFeedback({ text: 'All fields are required. Please enter complete dish information.', isError: true });
+      setFeedback({
+        text: 'All fields are required. Please complete the form.',
+        isError: true,
+      });
       return;
     }
 
-    const numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice <= 0) {
-      setFeedback({ text: 'Please enter a valid numeric price greater than zero.', isError: true });
+    const numericPrice = parseFloat(price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      setFeedback({
+        text: 'Please enter a valid numeric price greater than zero.',
+        isError: true,
+      });
       return;
     }
 
-    const newDish = {
-      id: Date.now().toString(),
-      name: dishName.trim(),
-      description: description.trim(),
-      course,
-      price: numPrice,
-    };
+    if (editingId) {
+      // Update existing item
+      setDishes((prevDishes) =>
+        prevDishes.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                name: dishName.trim(),
+                description: description.trim(),
+                course,
+                price: numericPrice,
+              }
+            : item
+        )
+      );
+      Alert.alert('Success', `"${dishName}" has been successfully updated!`);
+      setCurrentScreen('view');
+    } else {
+      // Add new item
+      const newDish = {
+        id: Date.now().toString(),
+        name: dishName.trim(),
+        description: description.trim(),
+        course,
+        price: numericPrice,
+      };
+      setDishes((prevDishes) => [newDish, ...prevDishes]);
+      setFeedback({
+        text: `"${dishName}" successfully added to the menu!`,
+        isError: false,
+      });
+    }
 
-    setDishes((prev) => [newDish, ...prev]);
-    setFeedback({ text: `"${dishName}" successfully added to the menu!`, isError: false });
-    resetForm();
+    resetFormFields();
   };
 
-  const getBadgeStyle = (c) => {
+  const handleStartEdit = (dish) => {
+    setEditingId(dish.id);
+    setDishName(dish.name);
+    setDescription(dish.description);
+    setCourse(dish.course);
+    setPrice(dish.price.toString());
+    setCurrentScreen('edit');
+  };
+
+  const handleConfirmDelete = () => {
+    if (dishToDelete) {
+      setDishes((prevDishes) =>
+        prevDishes.filter((item) => item.id !== dishToDelete.id)
+      );
+      setDeleteModalVisible(false);
+      setDishToDelete(null);
+    }
+  };
+
+  // SEARCH & FILTER
+  const filteredDishes = dishes.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCourse =
+      selectedFilter === 'All' || item.course === selectedFilter;
+    return matchesSearch && matchesCourse;
+  });
+
+  // STATISTICS CALCULATIONS
+  const totalItems = dishes.length;
+  const averagePrice =
+    totalItems > 0
+      ? dishes.reduce((sum, d) => sum + d.price, 0) / totalItems
+      : 0;
+  const starterCount = dishes.filter((d) => d.course === 'Starter').length;
+  const mainCount = dishes.filter((d) => d.course === 'Main Course').length;
+  const dessertCount = dishes.filter((d) => d.course === 'Dessert').length;
+
+  const getCourseBadgeStyle = (c) => {
     switch (c) {
       case 'Starter':
         return { backgroundColor: '#1B3E2B', color: COLORS.starterColor };
@@ -117,7 +226,10 @@ export default function App() {
       case 'Dessert':
         return { backgroundColor: '#331B38', color: COLORS.dessertColor };
       default:
-        return { backgroundColor: COLORS.secondarySurface, color: COLORS.primaryText };
+        return {
+          backgroundColor: COLORS.secondarySurface,
+          color: COLORS.primaryText,
+        };
     }
   };
 
@@ -125,10 +237,10 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      { }
+      {/* NAVBAR WITH BACK BUTTON & LOGO */}
       <View style={styles.navbar}>
         {currentScreen !== 'home' ? (
-          <TouchableOpacity style={styles.backBtn} onPress={handleGoHome}>
+          <TouchableOpacity style={styles.backBtn} onPress={handleNavigateHome}>
             <Text style={styles.backBtnText}>‹ Back</Text>
           </TouchableOpacity>
         ) : (
@@ -136,37 +248,49 @@ export default function App() {
         )}
 
         <View style={styles.navbarBrand}>
-          <Image source={LOGO_IMAGE} style={styles.navLogo} resizeMode="contain" />
+          <Image
+            source={LOGO_IMAGE}
+            style={styles.navLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.brandTitle}>Chef's Menu Manager</Text>
         </View>
 
         <View style={{ width: 60 }} />
       </View>
 
-      {/* SCREEN 1: Home Dashboard */}
+      {/* SCREEN 1: HOME DASHBOARD */}
       {currentScreen === 'home' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          { }
           <View style={styles.heroCard}>
-            <Image source={LOGO_IMAGE} style={styles.heroLogo} resizeMode="contain" />
+            <Image
+              source={LOGO_IMAGE}
+              style={styles.heroLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.heroTitle}>Chef's Menu Manager</Text>
           </View>
 
-          {/* Welcome Message */}
           <View style={styles.welcomeBanner}>
             <Text style={styles.welcomeTitle}>Welcome back, Chef!</Text>
             <Text style={styles.welcomeSubtitle}>
-              You have <Text style={styles.highlightText}>{dishes.length} menu items</Text> currently active.
+              You have{' '}
+              <Text style={styles.highlightText}>{totalItems} menu items</Text>{' '}
+              currently active.
             </Text>
           </View>
 
-          {/* Action Button */}
           <Text style={styles.sectionHeader}>PRIMARY ACTIONS</Text>
 
           <TouchableOpacity
-            style={[styles.dashboardCard, { borderColor: COLORS.primaryAccent }]}
-            onPress={() => setCurrentScreen('add')}
-          >
+            style={[
+              styles.dashboardCard,
+              { borderColor: COLORS.primaryAccent },
+            ]}
+            onPress={() => {
+              resetFormFields();
+              setCurrentScreen('add');
+            }}>
             <View style={styles.iconBox}>
               <Text style={styles.dashIcon}>➕</Text>
             </View>
@@ -177,21 +301,39 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.dashboardCard, { borderColor: COLORS.secondaryAccent }]}
-            onPress={() => setCurrentScreen('view')}
-          >
+            style={[
+              styles.dashboardCard,
+              { borderColor: COLORS.secondaryAccent },
+            ]}
+            onPress={() => setCurrentScreen('view')}>
             <View style={styles.iconBox}>
               <Text style={styles.dashIcon}>📋</Text>
             </View>
             <View>
-              <Text style={styles.dashCardTitle}>View Menu Items</Text>
-              <Text style={styles.dashCardSub}>Browse all active dishes</Text>
+              <Text style={styles.dashCardTitle}>View & Manage Menu</Text>
+              <Text style={styles.dashCardSub}>
+                Search, filter, edit, and delete dishes
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.dashboardCard, { borderColor: '#2196F3' }]}
+            onPress={() => setCurrentScreen('stats')}>
+            <View style={styles.iconBox}>
+              <Text style={styles.dashIcon}>📊</Text>
+            </View>
+            <View>
+              <Text style={styles.dashCardTitle}>Menu Statistics</Text>
+              <Text style={styles.dashCardSub}>
+                View metrics and course breakdowns
+              </Text>
             </View>
           </TouchableOpacity>
         </ScrollView>
       )}
 
-      {/* SCREEN 2: Add Menu Items */}
+      {/* SCREEN 2: ADD MENU ITEM */}
       {currentScreen === 'add' && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.pageHeader}>Add Menu Item</Text>
@@ -222,11 +364,22 @@ export default function App() {
               selectedValue={course}
               onValueChange={(itemValue) => setCourse(itemValue)}
               dropdownIconColor={COLORS.primaryAccent}
-              style={{ color: COLORS.primaryText }}
-            >
-              <Picker.Item label="Starter" value="Starter" color={COLORS.cardBackground} />
-              <Picker.Item label="Main Course" value="Main Course" color={COLORS.   cardBackground} />
-              <Picker.Item label="Dessert" value="Dessert" color={COLORS.cardBackground} />
+              style={{ color: COLORS.primaryText }}>
+              <Picker.Item
+                label="Starter"
+                value="Starter"
+                color={COLORS.cardBackground}
+              />
+              <Picker.Item
+                label="Main Course"
+                value="Main Course"
+                color={COLORS.cardBackground}
+              />
+              <Picker.Item
+                label="Dessert"
+                value="Dessert"
+                color={COLORS.cardBackground}
+              />
             </Picker>
           </View>
 
@@ -240,77 +393,283 @@ export default function App() {
             keyboardType="numeric"
           />
 
-          { }
           {feedback.text !== '' && (
             <View
               style={[
                 styles.feedbackBox,
                 { backgroundColor: feedback.isError ? '#3D1412' : '#14381E' },
-              ]}
-            >
+              ]}>
               <Text
                 style={[
                   styles.feedbackText,
-                  { color: feedback.isError ? COLORS.errorColor : COLORS.primaryAccent },
-                ]}
-              >
+                  {
+                    color: feedback.isError
+                      ? COLORS.errorColor
+                      : COLORS.primaryAccent,
+                  },
+                ]}>
                 {feedback.text}
               </Text>
             </View>
           )}
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleSaveNewItem}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleSaveItem}>
             <Text style={styles.primaryButtonText}>SAVE MENU ITEM</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={resetForm}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={resetFormFields}>
             <Text style={styles.secondaryButtonText}>CLEAR FORM</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
 
-      {/* SCREEN 3: View Menu Items */}
+      {/* SCREEN 3: VIEW, SEARCH, FILTER & MANAGE MENU ITEMS */}
       {currentScreen === 'view' && (
         <View style={styles.listContainer}>
-          <Text style={styles.pageHeader}>Menu Items</Text>
+          <Text style={styles.pageHeader}>Menu Items & Management</Text>
+
+          {/* Search Bar */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="🔍 Search dish name or description..."
+            placeholderTextColor={COLORS.secondaryText}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+
+          {/* Course Filter Chips */}
+          <View style={styles.filterBar}>
+            {['All', 'Starter', 'Main Course', 'Dessert'].map((c) => (
+              <TouchableOpacity
+                key={c}
+                style={[
+                  styles.filterChip,
+                  selectedFilter === c && styles.activeFilterChip,
+                ]}
+                onPress={() => setSelectedFilter(c)}>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedFilter === c && styles.activeFilterChipText,
+                  ]}>
+                  {c}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <FlatList
-            data={dishes}
+            data={filteredDishes}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 24 }}
             ListEmptyComponent={
-              <Text style={styles.emptyListText}>No menu items have been added yet.</Text>
+              <Text style={styles.emptyListText}>
+                No menu items found matching criteria.
+              </Text>
             }
             renderItem={({ item }) => {
-              const badge = getBadgeStyle(item.course);
+              const badge = getCourseBadgeStyle(item.course);
               return (
                 <View style={styles.dishCard}>
                   <View style={styles.dishCardHeader}>
                     <Text style={styles.dishTitle}>{item.name}</Text>
-                    <Text style={styles.dishPrice}>R {item.price.toFixed(2)}</Text>
+                    <Text style={styles.dishPrice}>
+                      R {item.price.toFixed(2)}
+                    </Text>
                   </View>
 
-                  <View style={[styles.badge, { backgroundColor: badge.backgroundColor }]}>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: badge.backgroundColor },
+                    ]}>
                     <Text style={[styles.badgeText, { color: badge.color }]}>
                       {item.course.toUpperCase()}
                     </Text>
                   </View>
 
                   <Text style={styles.dishDescription}>{item.description}</Text>
+
+                  {/* Management Actions (Edit & Delete) */}
+                  <View style={styles.cardActionRow}>
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => handleStartEdit(item)}>
+                      <Text style={styles.editBtnText}>✏️ Edit</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.deleteBtn}
+                      onPress={() => {
+                        setDishToDelete(item);
+                        setDeleteModalVisible(true);
+                      }}>
+                      <Text style={styles.deleteBtnText}>🗑️ Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             }}
           />
-
-          <TouchableOpacity style={styles.primaryButton} onPress={handleGoHome}>
-            <Text style={styles.primaryButtonText}>BACK TO HOME</Text>
-          </TouchableOpacity>
         </View>
       )}
+
+      {/* SCREEN 4: EDIT MENU ITEM */}
+      {currentScreen === 'edit' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.pageHeader}>Edit Dish</Text>
+
+          <Text style={styles.fieldLabel}>DISH NAME</Text>
+          <TextInput
+            style={styles.textInput}
+            value={dishName}
+            onChangeText={setDishName}
+          />
+
+          <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+          <TextInput
+            style={[styles.textInput, styles.areaInput]}
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+          />
+
+          <Text style={styles.fieldLabel}>COURSE</Text>
+          <View style={styles.pickerBox}>
+            <Picker
+              selectedValue={course}
+              onValueChange={(itemValue) => setCourse(itemValue)}
+              dropdownIconColor={COLORS.primaryAccent}
+              style={{ color: COLORS.primaryText }}>
+              <Picker.Item
+                label="Starter"
+                value="Starter"
+                color={COLORS.cardBackground}
+              />
+              <Picker.Item
+                label="Main Course"
+                value="Main Course"
+                color={COLORS.cardBackground}
+              />
+              <Picker.Item
+                label="Dessert"
+                value="Dessert"
+                color={COLORS.cardBackground}
+              />
+            </Picker>
+          </View>
+
+          <Text style={styles.fieldLabel}>PRICE (R)</Text>
+          <TextInput
+            style={styles.textInput}
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+          />
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleSaveItem}>
+            <Text style={styles.primaryButtonText}>SAVE CHANGES</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              resetFormFields();
+              setCurrentScreen('view');
+            }}>
+            <Text style={styles.secondaryButtonText}>CANCEL</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+
+      {/* SCREEN 5: MENU STATISTICS */}
+      {currentScreen === 'stats' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.pageHeader}>Menu Statistics</Text>
+
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{totalItems}</Text>
+              <Text style={styles.statLabel}>Total Menu Items</Text>
+            </View>
+
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>R {averagePrice.toFixed(2)}</Text>
+              <Text style={styles.statLabel}>Average Price</Text>
+            </View>
+          </View>
+
+          <Text style={[styles.pageHeader, { marginTop: 24, fontSize: 16 }]}>
+            Course Counts & Breakdown
+          </Text>
+
+          <View style={styles.courseStatRow}>
+            <Text style={styles.courseStatLabel}>Starters</Text>
+            <Text
+              style={[styles.courseStatValue, { color: COLORS.starterColor }]}>
+              {starterCount} items
+            </Text>
+          </View>
+
+          <View style={styles.courseStatRow}>
+            <Text style={styles.courseStatLabel}>Main Courses</Text>
+            <Text style={[styles.courseStatValue, { color: COLORS.mainColor }]}>
+              {mainCount} items
+            </Text>
+          </View>
+
+          <View style={styles.courseStatRow}>
+            <Text style={styles.courseStatLabel}>Desserts</Text>
+            <Text
+              style={[styles.courseStatValue, { color: COLORS.dessertColor }]}>
+              {dessertCount} items
+            </Text>
+          </View>
+        </ScrollView>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Dish?</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to remove "{dishToDelete?.name}" from your
+              menu? This action cannot be undone.
+            </Text>
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setDeleteModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalDeleteBtn}
+                onPress={handleConfirmDelete}>
+                <Text style={styles.modalDeleteText}>Delete Dish</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
+// STYLES
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -342,6 +701,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  
   },
   brandTitle: {
     fontSize: 16,
@@ -365,12 +725,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.secondarySurface,
   },
   heroLogo: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
+    width: 70,
+    height: 70,
+    marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primaryText,
   },
@@ -507,6 +867,40 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.5,
   },
+  searchInput: {
+    backgroundColor: COLORS.cardBackground,
+    color: COLORS.primaryText,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: COLORS.secondarySurface,
+    marginBottom: 12,
+  },
+  filterBar: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: COLORS.secondarySurface,
+  },
+  activeFilterChip: {
+    backgroundColor: COLORS.primaryAccent,
+  },
+  filterChipText: {
+    color: COLORS.secondaryText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  activeFilterChipText: {
+    color: COLORS.primaryText,
+    fontWeight: 'bold',
+  },
   dishCard: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: 10,
@@ -547,11 +941,136 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryText,
     fontSize: 13,
     lineHeight: 18,
+    marginBottom: 12,
+  },
+  cardActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.secondarySurface,
+    paddingTop: 10,
+  },
+  editBtn: {
+    backgroundColor: COLORS.secondarySurface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  editBtnText: {
+    color: COLORS.primaryText,
+    fontSize: 13,
+  },
+  deleteBtn: {
+    backgroundColor: '#3D1412',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteBtnText: {
+    color: COLORS.errorColor,
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   emptyListText: {
     color: COLORS.secondaryText,
     textAlign: 'center',
     marginTop: 40,
     fontSize: 14,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: COLORS.cardBackground,
+    padding: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.secondarySurface,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primaryAccent,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.secondaryText,
+    textAlign: 'center',
+  },
+  courseStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.cardBackground,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.secondarySurface,
+  },
+  courseStatLabel: {
+    color: COLORS.primaryText,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  courseStatValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: COLORS.secondarySurface,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primaryText,
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: COLORS.secondaryText,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 6,
+    backgroundColor: COLORS.secondarySurface,
+  },
+  modalCancelText: {
+    color: COLORS.secondaryText,
+    fontWeight: '600',
+  },
+  modalDeleteBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 6,
+    backgroundColor: COLORS.errorColor,
+  },
+  modalDeleteText: {
+    color: COLORS.primaryText,
+    fontWeight: 'bold',
   },
 });
